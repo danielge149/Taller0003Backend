@@ -14,7 +14,7 @@ const crearSolicitud = (req, res) => {
         .then((mascota) => {
             if (!mascota) {
                 return res.status(404).json({
-                    mensaje: "La mascota con el idMascota proporcionado no existe."
+                    mensaje: `La mascota con ID = ${req.body.idMascota} proporcionado no existe.`
                 });
             }
 
@@ -105,12 +105,51 @@ const buscarSolicitudes = (req, res)=>{
 
 };
 
+const buscarSolicitudesPendientes = (req, res)=>{
+    
+    solicitudes.findAll({ where: { estadoSolicitud: "Pendiente" }}).then((resultado)=>{
+        res.status(200).json(resultado);    
+    }).catch((err)=>{
+        res.status(500).json({
+            mensaje: `No se encontraron Registros ::: ${err}`
+        });
+    });
+
+};
+
+const buscarSolicitudesAceptada = (req, res)=>{
+    
+    solicitudes.findAll({ where: { estadoSolicitud: "Aceptada" }}).then((resultado)=>{
+        res.status(200).json(resultado);    
+    }).catch((err)=>{
+        res.status(500).json({
+            mensaje: `No se encontraron Registros ::: ${err}`
+        });
+    });
+
+};
+
+const buscarSolicitudesRechazada = (req, res)=>{
+    
+    solicitudes.findAll({ where: { estadoSolicitud: "Rechazada" }}).then((resultado)=>{
+        res.status(200).json(resultado);    
+    }).catch((err)=>{
+        res.status(500).json({
+            mensaje: `No se encontraron Registros ::: ${err}`
+        });
+    });
+
+};
+
+
+
 
 
 
 const actualizarsolicitud = (req, res) => {
     const id_Solicitud = req.params.id;
-    // Verificar si el registro existe antes de intentar actualizar
+    
+    // Verificar si el registro de solicitud existe antes de intentar actualizar
     solicitudes.findByPk(id_Solicitud)
         .then((registroExistente) => {
             if (!registroExistente) {
@@ -127,50 +166,178 @@ const actualizarsolicitud = (req, res) => {
             }
 
             const idMascota = req.body.idMascota || registroExistente.idMascota;
-            const nombreSolicitante = req.body.nombreSolicitante || registroExistente.nombreSolicitante;
-            const correoSolicitante = req.body.correoSolicitante || registroExistente.correoSolicitante;
-            const estadoSolicitud = req.body.estadoSolicitud || registroExistente.estadoSolicitud;
 
-            solicitudes.update({ idMascota, nombreSolicitante, correoSolicitante, estadoSolicitud }, { where: { id_Solicitud } })
-                .then(() => {
-                    res.status(200).json({
-                        mensaje: "Registro actualizado correctamente"
-                    });
+            // Verificar si la mascota con el idMascota existe
+            mascotas.findByPk(idMascota)
+                .then((mascotaExistente) => {
+                    if (!mascotaExistente) {
+                        return res.status(400).json({
+                            mensaje: `La mascota con el ID = ${req.body.idMascota} no existe `
+                        });
+                    }
+
+                    const nombreSolicitante = req.body.nombreSolicitante || registroExistente.nombreSolicitante;
+                    const correoSolicitante = req.body.correoSolicitante || registroExistente.correoSolicitante;
+                    const estadoSolicitud = req.body.estadoSolicitud || registroExistente.estadoSolicitud;
+
+                    solicitudes.update({ idMascota, nombreSolicitante, correoSolicitante, estadoSolicitud }, { where: { id_Solicitud } })
+                        .then(() => {
+                            res.status(200).json({
+                                mensaje: "Registro actualizado correctamente"
+                            });
+                        })
+                        .catch((err) => {
+                            res.status(500).json({
+                                mensaje: `Error al actualizar registro ::: ${err}`
+                            });
+                        });
                 })
                 .catch((err) => {
                     res.status(500).json({
-                        mensaje: `Error al actualizar registro ::: ${err}`
+                        mensaje: `Error al verificar la existencia de la mascota ::: ${err}`
                     });
                 });
         })
         .catch((err) => {
             res.status(500).json({
-                mensaje: `Error al verificar la existencia del registro ::: ${err}`
+                mensaje: `Error al verificar la existencia del registro de solicitud ::: ${err}`
+            });
         });
-    });
 };
 
 
-const eliminarSolicitud=(req,res)=>{
-    const id_Solicitud= req.params.id;
-    if(id_Solicitud == null){
+const eliminarSolicitud = (req, res) => {
+    const id_Solicitud = req.params.id;
+
+    if (id_Solicitud == null) {
         res.status(203).json({
-            mensaje: `El id no puede estar vacio`
+            mensaje: `El id no puede estar vacío`
         });
         return;
     }
-    solicitudes.destroy({ where: { id_Solicitud }})
-        .then((resultado)=>{
-            res.status(200).json({
-                mensaje: `Registro Eliminado`
-            });
-        })
-        .catch((err)=>{
-            res.status(500).json({
-                mensaje: `Error al eliminar Registro ::: ${err}`
-            });
-        })
-    
 
+    // Verificar si el registro de solicitud existe antes de intentar eliminar
+    solicitudes.findByPk(id_Solicitud)
+        .then((registroExistente) => {
+            if (!registroExistente) {
+                return res.status(404).json({
+                    mensaje: "Registro no encontrado"
+                });
+            }
+
+            // El registro existe, ahora procedemos con la eliminación
+            solicitudes.destroy({ where: { id_Solicitud } })
+                .then((resultado) => {
+                    res.status(200).json({
+                        mensaje: `Registro Eliminado`
+                    });
+                })
+                .catch((err) => {
+                    res.status(500).json({
+                        mensaje: `Error al eliminar Registro ::: ${err}`
+                    });
+                });
+        })
+        .catch((err) => {
+            res.status(500).json({
+                mensaje: `Error al verificar la existencia del registro de solicitud ::: ${err}`
+            });
+        });
 };
-export{crearSolicitud, buscarIdSolicitud, buscarSolicitudes,actualizarsolicitud, eliminarSolicitud}
+
+
+const aceptarSolicitud = (req, res) => {
+    const id_Solicitud = req.params.id;
+
+    if (id_Solicitud == null) {
+        return res.status(203).json({
+            mensaje: "El id no puede estar vacío"
+        });
+    }
+
+    // Verificar si la solicitud con el id_Solicitud existe antes de intentar aceptar
+    solicitudes.findByPk(id_Solicitud)
+        .then((solicitudExistente) => {
+            if (!solicitudExistente) {
+                return res.status(404).json({
+                    mensaje: "Solicitud no encontrada"
+                });
+            }
+
+            // Verificar si la solicitud ya ha sido aceptada
+            if (solicitudExistente.estadoSolicitud === 'Aceptada') {
+                return res.status(400).json({
+                    mensaje: "La solicitud ya ha sido aceptada previamente"
+                });
+            }
+
+            // Actualizar el estado de la solicitud a "Aceptada"
+            solicitudes.update({ estadoSolicitud: 'Aceptada' }, { where: { id_Solicitud } })
+                .then(() => {
+                    res.status(200).json({
+                        mensaje: "Solicitud aceptada correctamente"
+                    });
+                })
+                .catch((err) => {
+                    res.status(500).json({
+                        mensaje: `Error al aceptar la solicitud ::: ${err}`
+                    });
+                });
+        })
+        .catch((err) => {
+            res.status(500).json({
+                mensaje: `Error al verificar la existencia de la solicitud ::: ${err}`
+            });
+        });
+};
+
+const rechazarSolicitud = (req, res) => {
+    const id_Solicitud = req.params.id;
+
+    if (id_Solicitud == null) {
+        return res.status(203).json({
+            mensaje: "El id no puede estar vacío"
+        });
+    }
+
+    // Verificar si la solicitud con el id_Solicitud existe antes de intentar aceptar
+    solicitudes.findByPk(id_Solicitud)
+        .then((solicitudExistente) => {
+            if (!solicitudExistente) {
+                return res.status(404).json({
+                    mensaje: "Solicitud no encontrada"
+                });
+            }
+
+            // Verificar si la solicitud ya ha sido aceptada
+            if (solicitudExistente.estadoSolicitud === 'Aceptada') {
+                return res.status(400).json({
+                    mensaje: "La solicitud ya ha sido aceptada previamente"
+                });
+            }
+
+            // Actualizar el estado de la solicitud a "Aceptada"
+            solicitudes.update({ estadoSolicitud: 'Rechazada' }, { where: { id_Solicitud } })
+                .then(() => {
+                    res.status(200).json({
+                        mensaje: "Solicitud rechazada correctamente"
+                    });
+                })
+                .catch((err) => {
+                    res.status(500).json({
+                        mensaje: `Error al rechazada la solicitud ::: ${err}`
+                    });
+                });
+        })
+        .catch((err) => {
+            res.status(500).json({
+                mensaje: `Error al verificar la existencia de la solicitud ::: ${err}`
+            });
+        });
+};
+
+
+
+export{crearSolicitud, buscarIdSolicitud, buscarSolicitudes,actualizarsolicitud, 
+    eliminarSolicitud, buscarSolicitudesPendientes, aceptarSolicitud, rechazarSolicitud, buscarSolicitudesAceptada,
+    buscarSolicitudesRechazada}

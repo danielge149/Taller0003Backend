@@ -163,28 +163,61 @@ const actualizarMascota = (req, res) => {
 
 
 
-const eliminarMascota=(req,res)=>{
-    const id_mascota= req.params.id;
-    if(id_mascota == null){
+const eliminarMascota = (req, res) => {
+    const id_mascota = req.params.id;
+
+    if (id_mascota == null) {
         res.status(203).json({
-            mensaje: `El id no puede estar vacio`
+            mensaje: `El id no puede estar vacío`
         });
         return;
     }
-    mascotas.destroy({ where: { id_mascota }})
-        .then((resultado)=>{
-            res.status(200).json({
-                mensaje: `Registro Eliminado`
-            });
-        })
-        .catch((err)=>{
-            res.status(500).json({
-                mensaje: `Error al eliminar Registro ::: ${err}`
-            });
-        })
-    
 
+    // Verificar si la mascota con el id_mascota existe antes de intentar eliminar
+    mascotas.findByPk(id_mascota)
+        .then((mascotaExistente) => {
+            if (!mascotaExistente) {
+                return res.status(404).json({
+                    mensaje: "Mascota no encontrada"
+                });
+            }
+
+            // Verificar si la mascota se utiliza como clave foranea en otraTabla
+            solicitudes.findOne({ where: { idMascota : id_mascota } })
+                .then((otraTablaExistente) => {
+                    if (otraTablaExistente) {
+                        return res.status(400).json({
+                            mensaje: "La mascota está siendo utilizada como clave foranea en solicitudes. No se puede eliminar."
+                        });
+                    }
+
+                    // La mascota no se utiliza como clave foranea, procedemos con la eliminación
+                    mascotas.destroy({ where: { id_mascota } })
+                        .then((resultado) => {
+                            res.status(200).json({
+                                mensaje: `Registro Eliminado`
+                            });
+                        })
+                        .catch((err) => {
+                            res.status(500).json({
+                                mensaje: `Error al eliminar Registro ::: ${err}`
+                            });
+                        });
+                })
+                .catch((err) => {
+                    res.status(500).json({
+                        mensaje: `Error al verificar la existencia en otraTabla ::: ${err}`
+                    });
+                });
+        })
+        .catch((err) => {
+            res.status(500).json({
+                mensaje: `Error al verificar la existencia de la mascota ::: ${err}`
+            });
+        });
 };
+
+
 
 export {crearMascota,buscarIdMascotas,buscarMascotas,actualizarMascota,
     eliminarMascota, buscarMascotasDiponibles , buscarGatos, buscarPerros}  

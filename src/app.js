@@ -24,8 +24,6 @@ app.get("/",(req,res)=>{
 
 //Rutas
 app.use("/mascotas",routerMascotas);
-
-//Rutas
 app.use("/solicitudes",routerSolicitudes);
 
 

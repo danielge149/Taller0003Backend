@@ -36,17 +36,17 @@ Content-Type: application/json
 }
 
 ###
-DELETE http://localhost:8000/mascotas/eliminarMascota/123 HTTP/1.1
+DELETE http://localhost:8000/mascotas/eliminarMascota/13 HTTP/1.1
 
-
+#Rutas solicitud 
 
 ###
 POST http://localhost:8000/solicitudes/crearSolicitud HTTP/1.1
 Content-Type: application/json
 
 {
-    "id_Solicitud": 124,
-    "idMascota": 1,
+    "id_Solicitud": 154,
+    "idMascota": 1269,
     "nombreSolicitante": "Fredy",
     "correoSolicitante": "FREDY@gmail.com"
 }
@@ -60,14 +60,32 @@ GET http://localhost:8000/solicitudes/buscarIdSolicitud/11 HTTP/1.1
 GET http://localhost:8000/solicitudes/buscarSolicitudes HTTP/1.1
 
 ###
-PUT http://localhost:8000/solicitudes/actualizarSolicitud/12 HTTP/1.1
+GET http://localhost:8000/solicitudes/buscarSolicitudesPendientes HTTP/1.1
+
+###
+GET http://localhost:8000/solicitudes/buscarSolicitudesAceptada HTTP/1.1
+
+
+###
+GET http://localhost:8000/solicitudes/buscarSolicitudesRechazada HTTP/1.1
+
+###
+PUT http://localhost:8000/solicitudes/actualizarSolicitud/14 HTTP/1.1
 Content-Type: application/json
 
 {
+    "idMascota": 1212,
     "nombreSolicitante": "Daniel Getial",
     "correoSolicitante": "FREDY@gmail.com",
     "estadoSolicitud": "aceptada"
 }
 
 ###
-DELETE http://localhost:8000/solicitudes/eliminarSolicitud/11 HTTP/1.1
+DELETE http://localhost:8000/solicitudes/eliminarSolicitud/12 HTTP/1.1
+
+
+###
+PUT http://localhost:8000/solicitudes/aceptarSolicitud/124 HTTP/1.1
+
+###
+PUT http://localhost:8000/solicitudes/rechazarSolicitud/154 HTTP/1.1
